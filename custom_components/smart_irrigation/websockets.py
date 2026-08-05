@@ -98,6 +98,8 @@ class SmartIrrigationConfigView(HomeAssistantView):
                 vol.Optional(const.CONF_SKIP_IRRIGATION_ON_PRECIPITATION): cv.boolean,
                 vol.Optional(const.CONF_OBSERVED_WATERING_ENABLED): cv.boolean,
                 vol.Optional(const.CONF_DIRECT_VALVE_CONTROL_ENABLED): cv.boolean,
+                vol.Optional(const.CONF_MASTER_SWITCH_ENTITY): vol.Any(None, cv.string),
+                vol.Optional(const.CONF_MASTER_VALVE_ENTITY): vol.Any(None, cv.string),
                 vol.Optional(const.CONF_ZONE_SEQUENCING): vol.In(
                     const.CONF_ZONE_SEQUENCING_OPTIONS
                 ),
