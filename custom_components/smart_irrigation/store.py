@@ -76,6 +76,7 @@ from .const import (
     CONF_WEATHER_SERVICE_OWM,
     CONF_ZONE_SEQUENCING,
     DOMAIN,
+    EMERGENCY_STOP_TODAY,
     MAPPING_CONF_SENSOR,
     MAPPING_CONF_SOURCE,
     MAPPING_CONF_SOURCE_NONE,
@@ -224,6 +225,7 @@ class Config:
     autoclearenabled = attr.ib(type=bool, default=CONF_DEFAULT_AUTO_CLEAR_ENABLED)
     cleardatatime = attr.ib(type=str, default=CONF_DEFAULT_CLEAR_TIME)
     starteventfiredtoday = attr.ib(type=bool, default=False)
+    emergencystoptoday = attr.ib(type=bool, default=False)
     continuousupdates = attr.ib(
         type=bool, default=CONF_DEFAULT_CONTINUOUS_UPDATES
     )  # continuous updates are disabled by default for now
@@ -477,6 +479,7 @@ class SmartIrrigationStorage:
                     CONF_CLEAR_TIME, CONF_DEFAULT_CLEAR_TIME
                 ),
                 starteventfiredtoday=data["config"].get(START_EVENT_FIRED_TODAY, False),
+                emergencystoptoday=data["config"].get(EMERGENCY_STOP_TODAY, False),
                 continuousupdates=data["config"].get(
                     CONF_CONTINUOUS_UPDATES, CONF_DEFAULT_CONTINUOUS_UPDATES
                 ),

@@ -36,6 +36,16 @@ class TriggersMixin:
 
     async def register_start_event(self):
         """Register a callback to fire the irrigation start event before sunrise based on total duration of enabled zones."""
+        if self._emergency_stop_today:
+            if self._track_sunrise_event_unsub:
+                self._track_sunrise_event_unsub()
+                self._track_sunrise_event_unsub = None
+            for unsub in self._track_irrigation_triggers_unsub:
+                unsub()
+            self._track_irrigation_triggers_unsub.clear()
+            _LOGGER.info("Emergency stop is active; no irrigation trigger registered")
+            return
+
         # sun_state = self.hass.states.get("sun.sun")
         # if sun_state is not None:
         #    sun_rise = sun_state.attributes.get("next_rising")
@@ -337,6 +347,9 @@ class TriggersMixin:
         if not self.master_switch_is_on():
             _LOGGER.info("Master switch is off; ignoring trigger '%s'", name)
             return
+        if self._emergency_stop_today:
+            _LOGGER.info("Emergency stop is active; ignoring trigger '%s'", name)
+            return
 
         if name in self._fired_triggers_today:
             _LOGGER.debug("Trigger '%s' already fired today, skipping", name)
@@ -357,6 +370,11 @@ class TriggersMixin:
             try:
                 if not self.master_switch_is_on():
                     _LOGGER.info("Master switch is off; not firing trigger '%s'", name)
+                    return
+                if self._emergency_stop_today:
+                    _LOGGER.info(
+                        "Emergency stop is active; not firing trigger '%s'", name
+                    )
                     return
                 # Decide once per day whether today is a watering day.
                 if self._watering_decision_today is None:
@@ -426,6 +444,12 @@ class TriggersMixin:
         # recomputed on the next trigger that is reached.
         self._fired_triggers_today.clear()
         self._watering_decision_today = None
+        if self._emergency_stop_today:
+            _LOGGER.info("Clearing emergency stop at the start of a new day")
+            self._emergency_stop_today = False
+            self.hass.async_create_task(
+                self.store.async_update_config({const.EMERGENCY_STOP_TODAY: False})
+            )
         if self._start_event_fired_today:
             _LOGGER.info("Resetting start event fired today tracker")
             self._start_event_fired_today = False

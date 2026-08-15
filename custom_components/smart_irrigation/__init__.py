@@ -523,6 +523,9 @@ class SmartIrrigationCoordinator(
             self._start_event_fired_today = True
         else:
             self._start_event_fired_today = False
+        self._emergency_stop_today = bool(
+            the_config.get(const.EMERGENCY_STOP_TODAY, False)
+        )
 
         # Names of triggers that have already fired today, so each trigger fires
         # independently (replaces the old single global "fired today" block).
@@ -751,7 +754,46 @@ class SmartIrrigationCoordinator(
         new_state = event.data.get("new_state")
         if new_state is None or new_state.state != "on":
             _LOGGER.warning("Master switch disabled; stopping Smart Irrigation")
-            await self.async_stop_direct_valves()
+            if (
+                self._running_valves
+                or self._active_valve_runs
+                or self._running_master_valve
+                or self._valve_run_tasks
+            ):
+                await self._async_handle_emergency_stop()
+            else:
+                await self.async_stop_direct_valves()
+
+    async def _async_handle_emergency_stop(self):
+        """Abort active watering, empty buckets, and lock watering for today."""
+        if self._emergency_stop_today:
+            return
+
+        self._emergency_stop_today = True
+        await self.store.async_update_config({const.EMERGENCY_STOP_TODAY: True})
+        await self.async_stop_direct_valves()
+
+        zones = await self.store.async_get_zones()
+        for zone in zones:
+            zone_id = zone.get(const.ZONE_ID)
+            await self.store.async_update_zone(
+                zone_id,
+                {
+                    const.ZONE_BUCKET: 0,
+                    const.ZONE_DURATION: 0,
+                },
+            )
+            async_dispatcher_send(
+                self.hass,
+                const.DOMAIN + "_config_updated",
+                zone_id,
+            )
+
+        async_dispatcher_send(self.hass, const.DOMAIN + "_update_frontend")
+        _LOGGER.warning(
+            "Emergency stop completed: all buckets emptied and watering locked "
+            "until the next day"
+        )
 
     async def async_apply_weather_service(self, use, service, api_key):
         """Apply a weather-service change at runtime (no entry reload).

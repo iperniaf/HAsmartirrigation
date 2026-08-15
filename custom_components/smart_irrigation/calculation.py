@@ -333,9 +333,55 @@ class CalculationMixin:
                 mapping.get(const.MAPPING_ID), changes
             )
 
+    async def _async_process_skipped_calculation(self):
+        """Close the calculation window without changing water balance."""
+        zones = await self.store.async_get_zones()
+        automatic_zones = [
+            zone
+            for zone in zones
+            if zone.get(const.ZONE_STATE) == const.ZONE_STATE_AUTOMATIC
+        ]
+        mapping_ids = {
+            zone.get(const.ZONE_MAPPING)
+            for zone in automatic_zones
+            if zone.get(const.ZONE_MAPPING) is not None
+        }
+        calculation_time = datetime.now()
+
+        for mapping_id in mapping_ids:
+            await self.store.async_update_mapping(
+                mapping_id,
+                {
+                    const.MAPPING_DATA: [],
+                    const.MAPPING_DATA_LAST_CALCULATION: {
+                        const.MAPPING_TIMESTAMP: calculation_time,
+                    },
+                },
+            )
+
+        for zone in automatic_zones:
+            await self.store.async_update_zone(
+                zone.get(const.ZONE_ID),
+                {
+                    const.ZONE_DURATION: 0,
+                    const.ZONE_LAST_CALCULATED: calculation_time,
+                    const.ZONE_LAST_UPDATED: calculation_time,
+                },
+            )
+            async_dispatcher_send(
+                self.hass,
+                const.DOMAIN + "_config_updated",
+                zone.get(const.ZONE_ID),
+            )
+
+        _LOGGER.info(
+            "Master switch is off; skipped calculation window was closed for %d zone(s)",
+            len(automatic_zones),
+        )
+
     async def _async_calculate_all(self, delete_weather_data):
         if not getattr(self, "master_switch_is_on", lambda: True)():
-            _LOGGER.info("Master switch is off; skipping calculation")
+            await self._async_process_skipped_calculation()
             return
         _LOGGER.info("Calculating all automatic zones")
         # get all zones that are in automatic and for all of those, loop over the unique list of mappings
