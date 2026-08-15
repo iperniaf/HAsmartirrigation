@@ -178,6 +178,11 @@ class ValveRunnerMixin:
         if not getattr(self, "master_switch_is_on", lambda: True)():
             _LOGGER.info("Master switch is off; refusing to start direct valve control")
             return
+        if getattr(self, "_emergency_stop_today", False):
+            _LOGGER.info(
+                "Emergency stop is active; refusing direct valve control until tomorrow"
+            )
+            return
         cfg = self.store.config
         if getattr(cfg, const.CONF_DIRECT_VALVE_CONTROL_ENABLED, False) is not True:
             return
@@ -554,6 +559,20 @@ class ValveRunnerMixin:
         """Resume or close direct runs that were in flight before a restart."""
         runs = list(getattr(self.store.config, const.CONF_ACTIVE_VALVE_RUNS, []) or [])
         if not runs:
+            return
+        if getattr(self, "_emergency_stop_today", False):
+            _LOGGER.warning(
+                "Emergency stop is active; closing %d persisted valve run(s) without resuming",
+                len(runs),
+            )
+            for run in runs:
+                entity_id = run.get(const.RUN_ENTITY_ID)
+                if entity_id:
+                    domain, _, off_svc = self._valve_services(entity_id)
+                    await self.hass.services.async_call(
+                        domain, off_svc, {"entity_id": entity_id}
+                    )
+            await self.store.async_update_config({const.CONF_ACTIVE_VALVE_RUNS: []})
             return
         if not getattr(self, "master_switch_is_on", lambda: True)():
             _LOGGER.warning(

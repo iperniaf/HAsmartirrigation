@@ -1,6 +1,6 @@
 """Store constants."""
 
-VERSION = "v2026.8.1"
+VERSION = "v2026.8.2"
 NAME = "Smart Irrigation"
 MANUFACTURER = "@altmenorg"
 
@@ -33,6 +33,7 @@ SUPPORTED_LANGUAGES = [
 ]
 
 START_EVENT_FIRED_TODAY = "starteventfiredtoday"
+EMERGENCY_STOP_TODAY = "emergencystoptoday"
 
 # Irrigation start trigger configuration
 CONF_IRRIGATION_START_TRIGGERS = "irrigation_start_triggers"
