@@ -15,6 +15,7 @@ def _coordinator_for_skipped_calculation(zones):
     coordinator.hass = Mock()
     coordinator.store = Mock()
     coordinator.store.async_get_zones = AsyncMock(return_value=zones)
+    coordinator.store.async_update_config = AsyncMock()
     coordinator.store.async_update_mapping = AsyncMock()
     coordinator.store.async_update_zone = AsyncMock()
     coordinator.master_switch_is_on = Mock(return_value=False)
