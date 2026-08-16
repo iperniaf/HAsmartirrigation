@@ -273,7 +273,7 @@ class RecurringScheduleManager:
     ) -> None:
         """Perform the scheduled action."""
         try:
-            if not self.coordinator.master_switch_is_on():
+            if action == "irrigate" and not self.coordinator.master_switch_is_on():
                 _LOGGER.info(
                     "Master switch is off; skipping schedule '%s'", schedule_name
                 )
