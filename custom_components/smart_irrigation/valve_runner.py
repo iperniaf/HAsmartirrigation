@@ -239,7 +239,7 @@ class ValveRunnerMixin:
                 for index, zone in enumerate(eligible):
                     result = await self._run_one_valve(
                         zone,
-                        master_entity if index == 0 else None,
+                        master_entity,
                     )
                     if result:
                         results.append(result)
@@ -333,22 +333,19 @@ class ValveRunnerMixin:
             "off_svc": off_svc,
         }, None
 
-    async def _finish_prepared_valve(self, prepared: dict):
-        """Run and close a valve that has already been opened."""
-        zone = prepared["zone"]
+    async def _run_prepared_valve(self, prepared: dict):
+        """Run a prepared valve and leave it open for coordinated shutdown."""
         zone_id = prepared["zone_id"]
         duration = prepared["duration"]
         started = dt_util.utcnow()
         await self._add_active_run(zone_id, prepared["entity_id"], started, duration)
-        try:
-            await asyncio.sleep(duration)
-        finally:
-            await self.hass.services.async_call(
-                prepared["domain"],
-                prepared["off_svc"],
-                {"entity_id": prepared["entity_id"]},
-            )
-            self._running_valves.pop(zone_id, None)
+        await asyncio.sleep(duration)
+
+    async def _credit_finished_prepared_valve(self, prepared: dict):
+        """Remove a completed run and credit its delivered water."""
+        zone = prepared["zone"]
+        zone_id = prepared["zone_id"]
+        duration = prepared["duration"]
         await self._remove_active_run(zone_id)
         await self._credit_direct_run(zone_id, duration)
         zone_after = self.store.get_zone(zone_id) or {}
@@ -361,6 +358,23 @@ class ValveRunnerMixin:
             "ran": True,
             "problem": None,
         }
+
+    async def _finish_prepared_valve(self, prepared: dict, master_entity=None):
+        """Run and safely close a valve that has already been opened."""
+        zone_id = prepared["zone_id"]
+        try:
+            await self._run_prepared_valve(prepared)
+        finally:
+            # Remove pressure before closing the last open zone valve.
+            if master_entity:
+                await self._turn_off_master_valve(master_entity)
+            await self.hass.services.async_call(
+                prepared["domain"],
+                prepared["off_svc"],
+                {"entity_id": prepared["entity_id"]},
+            )
+            self._running_valves.pop(zone_id, None)
+        return await self._credit_finished_prepared_valve(prepared)
 
     async def _run_one_valve(self, zone: dict, master_entity=None):
         """Open one zone's valve, hold it for its duration, close it, credit.
@@ -377,7 +391,7 @@ class ValveRunnerMixin:
             except BaseException:
                 await self._close_prepared_valve(prepared)
                 raise
-        return await self._finish_prepared_valve(prepared)
+        return await self._finish_prepared_valve(prepared, master_entity)
 
     async def _run_parallel_valves(self, zones, master_entity):
         """Open all zones, start the pump, then run all zones together."""
@@ -412,13 +426,29 @@ class ValveRunnerMixin:
                     *(self._close_prepared_valve(item) for item in prepared)
                 )
                 raise
-        try:
+        if not master_entity:
             return await asyncio.gather(
                 *(self._finish_prepared_valve(item) for item in prepared)
             )
-        except BaseException:
+        try:
+            await asyncio.gather(*(self._run_prepared_valve(item) for item in prepared))
+            if master_entity:
+                await self._turn_off_master_valve(master_entity)
             await asyncio.gather(
                 *(self._close_prepared_valve(item) for item in prepared)
+            )
+            return await asyncio.gather(
+                *(self._credit_finished_prepared_valve(item) for item in prepared)
+            )
+        except BaseException:
+            if master_entity:
+                await self._turn_off_master_valve(master_entity)
+            await asyncio.gather(
+                *(self._close_prepared_valve(item) for item in prepared)
+            )
+            await asyncio.gather(
+                *(self._remove_active_run(item["zone_id"]) for item in prepared),
+                return_exceptions=True,
             )
             raise
 
@@ -454,6 +484,8 @@ class ValveRunnerMixin:
         """Stop the configured pump/master valve."""
         entity_id = entity_id or getattr(self, "_running_master_valve", None)
         if not entity_id:
+            return
+        if getattr(self, "_running_master_valve", None) != entity_id:
             return
         domain, _, off_svc = self._valve_services(entity_id)
         try:

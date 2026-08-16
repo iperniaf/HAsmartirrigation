@@ -287,7 +287,32 @@ async def test_master_valve_starts_after_zone_and_stops_last():
     pump_off = ("switch", "turn_off", {"entity_id": "switch.pump"})
     assert calls.index(zone_on) < calls.index(pump_on)
     assert calls.index(pump_on) < calls.index(zone_off)
-    assert calls.index(zone_off) < calls.index(pump_off)
+    assert calls.index(pump_off) < calls.index(zone_off)
+
+
+async def test_sequential_master_valve_is_off_before_zone_handoff():
+    """The pump is off before closing one zone and opening the next."""
+    zone_a = _zone(id=0, linked_entity="switch.valve_a")
+    zone_b = _zone(id=1, linked_entity="switch.valve_b")
+    hass = _make_hass()
+    store = _make_store(
+        zone_a,
+        zones=[zone_a, zone_b],
+        master_entity="switch.pump",
+    )
+    store.get_zone = Mock(side_effect=lambda zid: zone_a if int(zid) == 0 else zone_b)
+    coord = _Coordinator(hass, store)
+
+    await coord.async_run_direct_valves()
+
+    calls = [c.args for c in hass.services.async_call.await_args_list]
+    pump_on = ("switch", "turn_on", {"entity_id": "switch.pump"})
+    pump_off = ("switch", "turn_off", {"entity_id": "switch.pump"})
+    valve_a_off = ("switch", "turn_off", {"entity_id": "switch.valve_a"})
+    valve_b_on = ("switch", "turn_on", {"entity_id": "switch.valve_b"})
+    assert calls.index(pump_off) < calls.index(valve_a_off)
+    assert calls.index(valve_a_off) < calls.index(valve_b_on)
+    assert calls.index(valve_b_on) < calls.index(pump_on, calls.index(pump_on) + 1)
 
 
 async def test_parallel_master_valve_starts_after_all_zones():
@@ -313,6 +338,30 @@ async def test_parallel_master_valve_starts_after_all_zones():
     valve_b_on = calls.index(("switch", "turn_on", {"entity_id": "switch.valve_b"}))
     assert valve_a_on < pump_on
     assert valve_b_on < pump_on
+
+
+async def test_parallel_master_valve_is_off_before_closing_zones():
+    """Parallel zones stay open until the pump is safely turned off."""
+    zone_a = _zone(id=0, linked_entity="switch.valve_a")
+    zone_b = _zone(id=1, linked_entity="switch.valve_b")
+    hass = _make_hass()
+    store = _make_store(
+        zone_a,
+        sequencing="parallel",
+        zones=[zone_a, zone_b],
+        master_entity="switch.pump",
+    )
+    store.get_zone = Mock(side_effect=lambda zid: zone_a if int(zid) == 0 else zone_b)
+    coord = _Coordinator(hass, store)
+
+    await coord.async_run_direct_valves()
+
+    calls = [c.args for c in hass.services.async_call.await_args_list]
+    pump_off = calls.index(("switch", "turn_off", {"entity_id": "switch.pump"}))
+    valve_a_off = calls.index(("switch", "turn_off", {"entity_id": "switch.valve_a"}))
+    valve_b_off = calls.index(("switch", "turn_off", {"entity_id": "switch.valve_b"}))
+    assert pump_off < valve_a_off
+    assert pump_off < valve_b_off
 
 
 async def test_run_parallel_opens_all():
