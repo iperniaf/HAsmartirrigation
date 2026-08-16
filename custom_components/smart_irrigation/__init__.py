@@ -1147,6 +1147,13 @@ class SmartIrrigationCoordinator(
         if mapping is None:
             return
 
+        if not self.master_switch_is_on():
+            _LOGGER.info(
+                "Master switch is off; buffering continuous sensor data for mapping %s",
+                mapping_id,
+            )
+            return
+
         _LOGGER.info(
             "[async_continuous_update_for_mapping] considering sensor group %s",
             mapping_id,
@@ -1431,11 +1438,6 @@ class SmartIrrigationCoordinator(
         ]
 
     async def _async_update_zone(self, zone_id):
-        if not self.master_switch_is_on():
-            _LOGGER.info(
-                "Master switch is off; skipping weather update for zone %s", zone_id
-            )
-            return
         # update the weather data for the mapping for the zone
         _LOGGER.info("Updating weather data for zone %s", zone_id)
         zone = self.store.get_zone(zone_id)
@@ -1551,9 +1553,6 @@ class SmartIrrigationCoordinator(
                     )
 
     async def _async_update_all(self, *args):
-        if not self.master_switch_is_on():
-            _LOGGER.info("Master switch is off; skipping weather update")
-            return
         # update the weather data for all mappings for all zones that are automatic here and store it.
         # in _async_calculate_all we need to read that data back and if there is none, we log an error, otherwise apply aggregate and use data
         # this should skip any pure sensor zones if continuous updates is enabled, otherwise it should include them

@@ -176,3 +176,28 @@ async def test_emergency_stop_blocks_direct_valve_control():
     await coordinator.async_run_direct_valves()
 
     coordinator.store.async_get_zones.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_continuous_updates_buffer_sensor_data_while_master_is_off():
+    """Continuous sensor samples remain buffered while calculation is paused."""
+    coordinator = _coordinator_for_skipped_calculation([])
+    coordinator._debounced_update_cancel = {}
+    coordinator.store.get_mapping = Mock(return_value={const.MAPPING_ID: 7})
+    coordinator.check_mapping_sources = Mock()
+
+    await coordinator.async_continuous_update_for_mapping(7)
+
+    coordinator.check_mapping_sources.assert_not_called()
+    coordinator.store.async_update_mapping.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_scheduled_weather_update_runs_while_master_is_off():
+    """The master switch blocks irrigation, not scheduled data collection."""
+    coordinator = _coordinator_for_skipped_calculation([])
+    coordinator.use_weather_service = False
+
+    await coordinator._async_update_all()
+
+    coordinator.store.async_get_zones.assert_awaited_once()
