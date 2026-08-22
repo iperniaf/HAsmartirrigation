@@ -16,7 +16,10 @@
       "after": "después"
     },
     "units": {
-      "seconds": "segundos"
+      "second": "segundo",
+      "seconds": "segundos",
+      "minute": "minuto",
+      "minutes": "minutos"
     },
     "attributes": {
       "size": "Tamaño",

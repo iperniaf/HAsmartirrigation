@@ -15,7 +15,7 @@ import {
   SmartIrrigationInfo,
   SmartIrrigationZone,
 } from "../../types";
-import { output_unit } from "../../helpers";
+import { formatDuration, output_unit } from "../../helpers";
 import { globalStyle } from "../../styles/global-style";
 import { modernStyle } from "../../styles/modern-style";
 import { localize } from "../../../localize/localize";
@@ -206,9 +206,10 @@ class SmartIrrigationViewInfo extends SubscribeMixin(LitElement) {
                       )}:</span
                     >
                     <span class="value">
-                      ${zone.duration
-                        ? `${Math.round(zone.duration)} ${localize("common.units.seconds", this.hass?.language ?? "en")}`
-                        : `0 ${localize("common.units.seconds", this.hass?.language ?? "en")}`}
+                      ${formatDuration(
+                        zone.duration,
+                        this.hass?.language ?? "en",
+                      )}
                     </span>
                   </div>
                 </div>
@@ -292,9 +293,8 @@ class SmartIrrigationViewInfo extends SubscribeMixin(LitElement) {
                     )}:</label
                   >
                   <span class="value"
-                    >${this.info.next_irrigation_duration}
-                    ${localize(
-                      "common.units.seconds",
+                    >${formatDuration(
+                      this.info.next_irrigation_duration,
                       this.hass.language,
                     )}</span
                   >
@@ -406,9 +406,8 @@ class SmartIrrigationViewInfo extends SubscribeMixin(LitElement) {
                     )}:</label
                   >
                   <span class="value"
-                    >${this.info.total_irrigation_duration}
-                    ${localize(
-                      "common.units.seconds",
+                    >${formatDuration(
+                      this.info.total_irrigation_duration,
                       this.hass.language,
                     )}</span
                   >

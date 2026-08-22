@@ -46,6 +46,7 @@ import {
   ZONE_THROUGHPUT,
 } from "./const";
 import { Dictionary } from "./types";
+import { localize } from "../localize/localize";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 
 export function getDomain(entity: string | HassEntity) {
@@ -92,6 +93,26 @@ export function output_unit(config, arg0: string): TemplateResult {
     default:
       return html``;
   }
+}
+
+export function formatDuration(seconds: number, language: string): string {
+  const totalSeconds = Math.max(0, Math.round(Number(seconds) || 0));
+  const minutes = Math.floor(totalSeconds / 60);
+  const remainingSeconds = totalSeconds % 60;
+  const secondsLabel = localize(
+    `common.units.second${remainingSeconds === 1 ? "" : "s"}`,
+    language,
+  );
+
+  if (minutes === 0) {
+    return `${remainingSeconds} ${secondsLabel}`;
+  }
+
+  const minutesLabel = localize(
+    `common.units.minute${minutes === 1 ? "" : "s"}`,
+    language,
+  );
+  return `${minutes} ${minutesLabel} ${remainingSeconds} ${secondsLabel}`;
 }
 export function getOptionsForMappingType(mapping: string) {
   switch (mapping) {
