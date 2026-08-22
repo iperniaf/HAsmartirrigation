@@ -107,6 +107,7 @@ def _make_store(
         direct_valve_control_enabled=enabled,
         zone_sequencing=sequencing,
         master_valve_entity=master_entity,
+        zone_transition_delay=0,
         active_valve_runs=[],
     )
     store.get_zone = Mock(return_value=zone)
@@ -313,6 +314,29 @@ async def test_sequential_master_valve_is_off_before_zone_handoff():
     assert calls.index(pump_off) < calls.index(valve_a_off)
     assert calls.index(valve_a_off) < calls.index(valve_b_on)
     assert calls.index(valve_b_on) < calls.index(pump_on, calls.index(pump_on) + 1)
+
+
+async def test_sequential_zone_transition_delay_waits_between_zones(monkeypatch):
+    """A configured delay is awaited after one zone closes."""
+    zone_a = _zone(id=0, linked_entity="switch.valve_a")
+    zone_b = _zone(id=1, linked_entity="switch.valve_b")
+    hass = _make_hass()
+    store = _make_store(
+        zone_a,
+        zones=[zone_a, zone_b],
+        sequencing="sequential",
+    )
+    store.config.zone_transition_delay = 5
+    store.get_zone = Mock(side_effect=lambda zid: zone_a if int(zid) == 0 else zone_b)
+    coord = _Coordinator(hass, store)
+    sleep = AsyncMock()
+    monkeypatch.setattr(
+        "custom_components.smart_irrigation.valve_runner.asyncio.sleep", sleep
+    )
+
+    await coord.async_run_direct_valves()
+
+    assert [call.args[0] for call in sleep.await_args_list] == [300.0, 5, 300.0]
 
 
 async def test_parallel_master_valve_starts_after_all_zones():

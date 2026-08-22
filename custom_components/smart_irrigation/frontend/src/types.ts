@@ -46,6 +46,7 @@ export class SmartIrrigationConfig {
   direct_valve_control_enabled: boolean;
   master_valve_entity?: string | null;
   zone_sequencing: string;
+  zone_transition_delay: number;
 
   constructor() {
     this.calctime = "23:00";
@@ -76,6 +77,7 @@ export class SmartIrrigationConfig {
     this.direct_valve_control_enabled = false;
     this.master_valve_entity = null;
     this.zone_sequencing = "sequential";
+    this.zone_transition_delay = 0;
   }
 }
 

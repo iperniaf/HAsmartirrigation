@@ -38,6 +38,7 @@ export const CONF_MASTER_SWITCH_ENTITY = "master_switch_entity";
 // Direct valve control configuration
 export const CONF_DIRECT_VALVE_CONTROL_ENABLED = "direct_valve_control_enabled";
 export const CONF_MASTER_VALVE_ENTITY = "master_valve_entity";
+export const CONF_ZONE_TRANSITION_DELAY = "zone_transition_delay";
 export const CONF_ZONE_SEQUENCING = "zone_sequencing";
 export const ZONE_SEQUENCING_SEQUENTIAL = "sequential";
 export const ZONE_SEQUENCING_PARALLEL = "parallel";

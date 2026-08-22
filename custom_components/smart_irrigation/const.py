@@ -78,6 +78,8 @@ CONF_ZONE_SEQUENCING_OPTIONS = [
     CONF_ZONE_SEQUENCING_PARALLEL,
 ]
 CONF_DEFAULT_ZONE_SEQUENCING = CONF_ZONE_SEQUENCING_SEQUENTIAL
+CONF_ZONE_TRANSITION_DELAY = "zone_transition_delay"
+CONF_DEFAULT_ZONE_TRANSITION_DELAY = 0
 # Persisted list of in-flight direct-control runs (reboot resilience).
 CONF_ACTIVE_VALVE_RUNS = "active_valve_runs"
 # Keys inside an active-run record.

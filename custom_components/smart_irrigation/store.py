@@ -56,6 +56,7 @@ from .const import (
     CONF_DEFAULT_USE_WEATHER_SERVICE,
     CONF_DEFAULT_WEATHER_SERVICE,
     CONF_DEFAULT_ZONE_SEQUENCING,
+    CONF_DEFAULT_ZONE_TRANSITION_DELAY,
     CONF_DIRECT_VALVE_CONTROL_ENABLED,
     CONF_IMPERIAL,
     CONF_IRRIGATION_START_TRIGGERS,
@@ -75,6 +76,7 @@ from .const import (
     CONF_WEATHER_SERVICE,
     CONF_WEATHER_SERVICE_OWM,
     CONF_ZONE_SEQUENCING,
+    CONF_ZONE_TRANSITION_DELAY,
     DOMAIN,
     EMERGENCY_STOP_TODAY,
     MAPPING_CONF_SENSOR,
@@ -269,6 +271,9 @@ class Config:
     )
     master_valve_entity = attr.ib(type=str, default=CONF_DEFAULT_MASTER_VALVE_ENTITY)
     zone_sequencing = attr.ib(type=str, default=CONF_DEFAULT_ZONE_SEQUENCING)
+    zone_transition_delay = attr.ib(
+        type=int, default=CONF_DEFAULT_ZONE_TRANSITION_DELAY
+    )
     # In-flight direct-control runs, persisted so a reboot can resume them.
     active_valve_runs = attr.ib(type=list, default=[])
 
@@ -535,6 +540,9 @@ class SmartIrrigationStorage:
                 ),
                 zone_sequencing=data["config"].get(
                     CONF_ZONE_SEQUENCING, CONF_DEFAULT_ZONE_SEQUENCING
+                ),
+                zone_transition_delay=data["config"].get(
+                    CONF_ZONE_TRANSITION_DELAY, CONF_DEFAULT_ZONE_TRANSITION_DELAY
                 ),
                 active_valve_runs=data["config"].get(CONF_ACTIVE_VALVE_RUNS, []),
             )
