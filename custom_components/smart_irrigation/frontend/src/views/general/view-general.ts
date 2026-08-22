@@ -37,6 +37,7 @@ import {
   CONF_DAYS_BETWEEN_IRRIGATION,
   CONF_MASTER_SWITCH_ENTITY,
   CONF_MASTER_VALVE_ENTITY,
+  CONF_ZONE_TRANSITION_DELAY,
   TRIGGER_TYPE_SUNRISE,
   TRIGGER_TYPE_SUNSET,
   TRIGGER_TYPE_SOLAR_AZIMUTH,
@@ -151,6 +152,7 @@ export class SmartIrrigationViewGeneral extends SubscribeMixin(LitElement) {
         CONF_DAYS_BETWEEN_IRRIGATION,
         CONF_MASTER_SWITCH_ENTITY,
         CONF_MASTER_VALVE_ENTITY,
+        CONF_ZONE_TRANSITION_DELAY,
       ]);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -919,6 +921,41 @@ export class SmartIrrigationViewGeneral extends SubscribeMixin(LitElement) {
                     </option>
                     </select>
                 </div>
+                ${this.config.zone_sequencing === "sequential"
+                  ? html`
+                      <div class="setting-row">
+                        <div class="setting-label">
+                          ${localize(
+                            "observed_watering.transition_delay_label",
+                            lang,
+                          )}
+                          <div class="setting-hint">
+                            ${localize(
+                              "observed_watering.transition_delay_description",
+                              lang,
+                            )}
+                          </div>
+                        </div>
+                        <input
+                          class="field combo-num"
+                          type="number"
+                          min="0"
+                          step="1"
+                          .value=${String(this.config.zone_transition_delay ?? 0)}
+                          @change=${(e: Event) =>
+                            this.handleConfigChange({
+                              [CONF_ZONE_TRANSITION_DELAY]: Math.max(
+                                0,
+                                parseInt(
+                                  (e.target as HTMLInputElement).value,
+                                  10,
+                                ) || 0,
+                              ),
+                            })}
+                        />
+                      </div>
+                    `
+                  : ""}
                 <div class="setting-row">
                   <div class="setting-label">
                     ${localize("observed_watering.master_valve_label", lang)}

@@ -194,6 +194,17 @@ class ValveRunnerMixin:
         sequencing = getattr(
             cfg, const.CONF_ZONE_SEQUENCING, const.CONF_DEFAULT_ZONE_SEQUENCING
         )
+        transition_delay = max(
+            0,
+            int(
+                getattr(
+                    cfg,
+                    const.CONF_ZONE_TRANSITION_DELAY,
+                    const.CONF_DEFAULT_ZONE_TRANSITION_DELAY,
+                )
+                or 0
+            ),
+        )
         master_entity = getattr(cfg, const.CONF_MASTER_VALVE_ENTITY, None)
         master_entity = master_entity if isinstance(master_entity, str) else None
         zone_entities = {z.get(const.ZONE_LINKED_ENTITY) for z in eligible}
@@ -249,6 +260,17 @@ class ValveRunnerMixin:
                         )
                         if master_entity and not master_started:
                             break
+                    if (
+                        result
+                        and result.get("ran")
+                        and transition_delay > 0
+                        and index < len(eligible) - 1
+                    ):
+                        _LOGGER.info(
+                            "Waiting %d seconds before opening the next zone",
+                            transition_delay,
+                        )
+                        await asyncio.sleep(transition_delay)
         finally:
             if master_entity and (
                 master_started

@@ -103,6 +103,9 @@ class SmartIrrigationConfigView(HomeAssistantView):
                 vol.Optional(const.CONF_ZONE_SEQUENCING): vol.In(
                     const.CONF_ZONE_SEQUENCING_OPTIONS
                 ),
+                vol.Optional(const.CONF_ZONE_TRANSITION_DELAY): vol.All(
+                    vol.Coerce(int), vol.Range(min=0)
+                ),
                 vol.Optional(const.CONF_PRECIPITATION_THRESHOLD_MM): vol.Coerce(float),
                 vol.Optional(const.CONF_DAYS_BETWEEN_IRRIGATION): vol.Coerce(int),
                 vol.Optional(const.CONF_MANUAL_COORDINATES_ENABLED): cv.boolean,
