@@ -45,7 +45,7 @@ import {
   SmartIrrigationMapping,
   WeatherRecord,
 } from "../../types";
-import { output_unit } from "../../helpers";
+import { formatDuration, output_unit } from "../../helpers";
 import { globalStyle } from "../../styles/global-style";
 import { localize } from "../../../localize/localize";
 import {
@@ -799,9 +799,7 @@ class SmartIrrigationViewZones extends SubscribeMixin(LitElement) {
       "panels.zones.labels.states." + zone.state,
       lang,
     );
-    const durationText = `${Math.round(
-      Number(zone.duration) || 0,
-    )} ${UNIT_SECONDS}`;
+    const durationText = formatDuration(zone.duration, lang);
 
     const expanded = zone.id != undefined && this._expanded.has(zone.id);
 
