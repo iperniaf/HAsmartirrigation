@@ -201,3 +201,38 @@ async def test_scheduled_weather_update_runs_while_master_is_off():
     await coordinator._async_update_all()
 
     coordinator.store.async_get_zones.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_record_skip_persists_reason_and_timestamp():
+    """Recording a skip stores the reason and a UTC timestamp."""
+    coordinator = _coordinator_for_skipped_calculation([])
+
+    await coordinator._record_skip("master_switch")
+
+    changes = coordinator.store.async_update_config.await_args.args[0]
+    assert changes[const.LAST_SKIP_REASON] == "master_switch"
+    assert isinstance(changes[const.LAST_SKIP_TIMESTAMP], datetime)
+
+
+def test_fire_start_event_records_skip_when_master_off():
+    """A disabled master switch schedules a skip record and does not fire."""
+    coordinator = _coordinator_for_skipped_calculation([])
+    coordinator.hass.async_create_task = Mock()
+    coordinator._emergency_stop_today = False
+
+    coordinator._fire_start_event({"name": "trigger"})
+
+    coordinator.hass.async_create_task.assert_called_once()
+
+
+def test_fire_start_event_records_skip_on_emergency_stop():
+    """An active emergency stop schedules a skip record and does not fire."""
+    coordinator = _coordinator_for_skipped_calculation([])
+    coordinator.master_switch_is_on = Mock(return_value=True)
+    coordinator.hass.async_create_task = Mock()
+    coordinator._emergency_stop_today = True
+
+    coordinator._fire_start_event({"name": "trigger"})
+
+    coordinator.hass.async_create_task.assert_called_once()

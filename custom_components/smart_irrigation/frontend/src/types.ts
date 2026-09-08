@@ -198,6 +198,8 @@ export interface SmartIrrigationInfo {
   sunrise_time?: Date;
   total_irrigation_duration?: number;
   irrigation_explanation?: string;
+  last_skip_reason?: string;
+  last_skip_timestamp?: Date;
 }
 
 export interface WeatherRecord {
