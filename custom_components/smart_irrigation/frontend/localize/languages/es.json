@@ -232,7 +232,14 @@
             "reason": "Motivo",
             "sunrise": "Amanecer",
             "total-duration": "Duración total",
-            "explanation": "Explicación"
+            "explanation": "Explicación",
+            "last-skip": "Último skip",
+            "skip-reasons": {
+              "precipitation": "Precipitación prevista",
+              "days_between": "Días insuficientes desde el último riego",
+              "master_switch": "Interruptor maestro apagado",
+              "emergency_stop": "Parada de emergencia"
+            }
           },
           "no-data": "No hay datos disponibles"
         }

@@ -541,6 +541,12 @@ async def websocket_get_irrigation_info(hass: HomeAssistant, connection, msg):
             "sunrise_time": sunrise_time.isoformat() if sunrise_time else None,
             "total_irrigation_duration": int(total_duration),
             "irrigation_explanation": irrigation_explanation,
+            "last_skip_reason": config.get(const.LAST_SKIP_REASON),
+            "last_skip_timestamp": (
+                config.get(const.LAST_SKIP_TIMESTAMP).isoformat()
+                if config.get(const.LAST_SKIP_TIMESTAMP)
+                else None
+            ),
         }
 
         _LOGGER.debug("Irrigation info calculated: %s", irrigation_info)
@@ -561,6 +567,8 @@ async def websocket_get_irrigation_info(hass: HomeAssistant, connection, msg):
             "sunrise_time": sunrise_time.isoformat(),
             "total_irrigation_duration": 0,
             "irrigation_explanation": "Unable to calculate irrigation schedule. Please check system configuration.",
+            "last_skip_reason": None,
+            "last_skip_timestamp": None,
         }
 
     connection.send_result(msg["id"], irrigation_info)

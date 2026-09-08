@@ -79,6 +79,8 @@ from .const import (
     CONF_ZONE_TRANSITION_DELAY,
     DOMAIN,
     EMERGENCY_STOP_TODAY,
+    LAST_SKIP_REASON,
+    LAST_SKIP_TIMESTAMP,
     MAPPING_CONF_SENSOR,
     MAPPING_CONF_SOURCE,
     MAPPING_CONF_SOURCE_NONE,
@@ -228,6 +230,8 @@ class Config:
     cleardatatime = attr.ib(type=str, default=CONF_DEFAULT_CLEAR_TIME)
     starteventfiredtoday = attr.ib(type=bool, default=False)
     emergencystoptoday = attr.ib(type=bool, default=False)
+    last_skip_reason = attr.ib(type=str, default=None)
+    last_skip_timestamp = attr.ib(type=datetime, default=None)
     continuousupdates = attr.ib(
         type=bool, default=CONF_DEFAULT_CONTINUOUS_UPDATES
     )  # continuous updates are disabled by default for now
@@ -485,6 +489,8 @@ class SmartIrrigationStorage:
                 ),
                 starteventfiredtoday=data["config"].get(START_EVENT_FIRED_TODAY, False),
                 emergencystoptoday=data["config"].get(EMERGENCY_STOP_TODAY, False),
+                last_skip_reason=data["config"].get(LAST_SKIP_REASON, None),
+                last_skip_timestamp=data["config"].get(LAST_SKIP_TIMESTAMP, None),
                 continuousupdates=data["config"].get(
                     CONF_CONTINUOUS_UPDATES, CONF_DEFAULT_CONTINUOUS_UPDATES
                 ),

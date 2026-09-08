@@ -19,6 +19,7 @@ from homeassistant.helpers.event import (
     async_track_sunrise,
     async_track_sunset,
 )
+from homeassistant.util import dt as dt_util
 
 from . import const
 from .helpers import find_next_solar_azimuth_time, normalize_azimuth_angle
@@ -332,6 +333,15 @@ class TriggersMixin:
             duration_desc,
         )
 
+    async def _record_skip(self, reason: str) -> None:
+        """Persist the reason and timestamp of the latest skipped irrigation."""
+        await self.store.async_update_config(
+            {
+                const.LAST_SKIP_REASON: reason,
+                const.LAST_SKIP_TIMESTAMP: dt_util.utcnow(),
+            }
+        )
+
     @callback
     def _fire_start_event(self, trigger_info, *args):
         """Fire the irrigation start event for one trigger, if conditions allow.
@@ -346,9 +356,11 @@ class TriggersMixin:
 
         if not self.master_switch_is_on():
             _LOGGER.info("Master switch is off; ignoring trigger '%s'", name)
+            self.hass.async_create_task(self._record_skip("master_switch"))
             return
         if self._emergency_stop_today:
             _LOGGER.info("Emergency stop is active; ignoring trigger '%s'", name)
+            self.hass.async_create_task(self._record_skip("emergency_stop"))
             return
 
         if name in self._fired_triggers_today:
@@ -370,19 +382,21 @@ class TriggersMixin:
             try:
                 if not self.master_switch_is_on():
                     _LOGGER.info("Master switch is off; not firing trigger '%s'", name)
+                    await self._record_skip("master_switch")
                     return
                 if self._emergency_stop_today:
                     _LOGGER.info(
                         "Emergency stop is active; not firing trigger '%s'", name
                     )
+                    await self._record_skip("emergency_stop")
                     return
                 # Decide once per day whether today is a watering day.
                 if self._watering_decision_today is None:
                     skip_reason = None
                     if await self._check_precipitation_forecast():
-                        skip_reason = "forecasted precipitation"
+                        skip_reason = "precipitation"
                     elif await self._check_days_between_irrigation():
-                        skip_reason = "insufficient days since last irrigation"
+                        skip_reason = "days_between"
                     self._watering_decision_today = skip_reason is None
                     if skip_reason is not None:
                         _LOGGER.info(
@@ -390,7 +404,8 @@ class TriggersMixin:
                             "will not fire",
                             skip_reason,
                         )
-                        # Count this as a (skipped) day, once.
+                        # Record the skip and count this as a (skipped) day, once.
+                        await self._record_skip(skip_reason)
                         await self._increment_days_since_irrigation()
 
                 if not self._watering_decision_today:

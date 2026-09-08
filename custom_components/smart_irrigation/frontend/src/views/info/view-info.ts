@@ -381,6 +381,31 @@ class SmartIrrigationViewInfo extends SubscribeMixin(LitElement) {
             </span>
           </div>
 
+          ${this.info.last_skip_reason
+            ? html`
+                <div class="info-item">
+                  <label
+                    >${localize(
+                      "panels.info.cards.irrigation-reason.labels.last-skip",
+                      this.hass.language,
+                    )}:</label
+                  >
+                  <span class="value"
+                    >${localize(
+                      "panels.info.cards.irrigation-reason.labels.skip-reasons." +
+                        this.info.last_skip_reason,
+                      this.hass.language,
+                    )}
+                    ${this.info.last_skip_timestamp
+                      ? moment(this.info.last_skip_timestamp).format(
+                          "YYYY-MM-DD HH:mm:ss",
+                        )
+                      : ""}</span
+                  >
+                </div>
+              `
+            : ""}
+
           ${this.info.sunrise_time
             ? html`
                 <div class="info-item">

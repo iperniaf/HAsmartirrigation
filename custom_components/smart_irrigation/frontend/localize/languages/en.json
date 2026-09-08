@@ -233,7 +233,14 @@
             "reason": "Reason",
             "sunrise": "Sunrise",
             "total-duration": "Total duration",
-            "explanation": "Explanation"
+            "explanation": "Explanation",
+            "last-skip": "Last skip",
+            "skip-reasons": {
+              "precipitation": "Forecasted precipitation",
+              "days_between": "Insufficient days since last irrigation",
+              "master_switch": "Master switch off",
+              "emergency_stop": "Emergency stop"
+            }
           },
           "no-data": "No data available"
         }
