@@ -46,6 +46,15 @@ def _safe_parse_datetime(value):
     return datetime.datetime.min
 
 
+def _safe_isoformat(value):
+    """Return a persisted datetime as an ISO string without raising."""
+    if isinstance(value, datetime.datetime):
+        return value.isoformat()
+    if isinstance(value, str):
+        return value
+    return None
+
+
 @decorators.websocket_command(
     {
         vol.Required("type"): const.DOMAIN + "_config_updated",
@@ -542,10 +551,8 @@ async def websocket_get_irrigation_info(hass: HomeAssistant, connection, msg):
             "total_irrigation_duration": int(total_duration),
             "irrigation_explanation": irrigation_explanation,
             "last_skip_reason": config.get(const.LAST_SKIP_REASON),
-            "last_skip_timestamp": (
-                config.get(const.LAST_SKIP_TIMESTAMP).isoformat()
-                if config.get(const.LAST_SKIP_TIMESTAMP)
-                else None
+            "last_skip_timestamp": _safe_isoformat(
+                config.get(const.LAST_SKIP_TIMESTAMP)
             ),
         }
 

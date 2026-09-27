@@ -5,8 +5,11 @@ logic of TriggersMixin so the displayed start matches when irrigation actually
 begins, rather than always assuming "finish at sunrise".
 """
 
+from datetime import datetime
+
 from custom_components.smart_irrigation import const
 from custom_components.smart_irrigation.websockets import (
+    _safe_isoformat,
     _trigger_start_base_and_offset,
 )
 
@@ -54,3 +57,11 @@ def test_sunset_starts_exactly_at_offset_without_duration():
 def test_solar_azimuth_falls_back_to_sunrise_minus_duration():
     trig = _trig(const.TRIGGER_TYPE_SOLAR_AZIMUTH, offset=45, account=True)
     assert _trigger_start_base_and_offset(trig, _TD) == ("sunrise", -_TD)
+
+
+def test_safe_isoformat_accepts_persisted_datetime_values():
+    timestamp = "2026-09-08T07:30:00+00:00"
+
+    assert _safe_isoformat(timestamp) == timestamp
+    assert _safe_isoformat(datetime.fromisoformat(timestamp)) == timestamp
+    assert _safe_isoformat(None) is None
