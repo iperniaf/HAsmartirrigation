@@ -88,6 +88,7 @@ def mock_store():
             START_EVENT_FIRED_TODAY: False,
         }
     )
+    store.async_update_config = AsyncMock()
 
     store.get_zone.return_value = test_zone
 
