@@ -239,8 +239,8 @@ def test_fire_start_event_records_skip_on_emergency_stop():
 
 
 @pytest.mark.asyncio
-async def test_register_start_event_records_skip_without_positive_duration():
-    """No watering duration records a skip instead of scheduling a trigger."""
+async def test_register_start_event_does_not_record_empty_skip_during_startup():
+    """Initial trigger registration does not create a false skip incident."""
     coordinator = _coordinator_for_skipped_calculation([])
     coordinator._emergency_stop_today = False
     coordinator._track_sunrise_event_unsub = None
@@ -249,5 +249,20 @@ async def test_register_start_event_records_skip_without_positive_duration():
     coordinator._record_skip = AsyncMock()
 
     await coordinator.register_start_event()
+
+    coordinator._record_skip.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_register_start_event_records_empty_skip_after_calculation():
+    """A completed calculation records no_zones when no duration remains."""
+    coordinator = _coordinator_for_skipped_calculation([])
+    coordinator._emergency_stop_today = False
+    coordinator._track_sunrise_event_unsub = None
+    coordinator._track_irrigation_triggers_unsub = []
+    coordinator.get_total_duration_all_enabled_zones = AsyncMock(return_value=0)
+    coordinator._record_skip = AsyncMock()
+
+    await coordinator.register_start_event(record_empty_skip=True)
 
     coordinator._record_skip.assert_awaited_once_with("no_zones")

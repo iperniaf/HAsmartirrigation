@@ -35,7 +35,7 @@ class TriggersMixin:
     bookkeeping attributes, and the direct-valve runner).
     """
 
-    async def register_start_event(self):
+    async def register_start_event(self, record_empty_skip=False):
         """Register a callback to fire the irrigation start event before sunrise based on total duration of enabled zones."""
         if self._emergency_stop_today:
             if self._track_sunrise_event_unsub:
@@ -68,7 +68,8 @@ class TriggersMixin:
             _LOGGER.info(
                 "No enabled zones with duration > 0, skipping trigger registration"
             )
-            await self._record_skip("no_zones")
+            if record_empty_skip:
+                await self._record_skip("no_zones")
             return
 
         # Get triggers configuration and the single active trigger. The defined
