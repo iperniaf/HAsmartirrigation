@@ -481,7 +481,7 @@ class CalculationMixin:
 
         # update start_event
         _LOGGER.debug("calling register start event from async_calculate_all")
-        await self.register_start_event()
+        await self.register_start_event(record_empty_skip=True)
 
     async def async_calculate_zone(
         self, zone_id, weatherdata, forecastdata=None, delete_weather_data=False
