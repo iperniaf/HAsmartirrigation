@@ -236,3 +236,18 @@ def test_fire_start_event_records_skip_on_emergency_stop():
     coordinator._fire_start_event({"name": "trigger"})
 
     coordinator.hass.async_create_task.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_register_start_event_records_skip_without_positive_duration():
+    """No watering duration records a skip instead of scheduling a trigger."""
+    coordinator = _coordinator_for_skipped_calculation([])
+    coordinator._emergency_stop_today = False
+    coordinator._track_sunrise_event_unsub = None
+    coordinator._track_irrigation_triggers_unsub = []
+    coordinator.get_total_duration_all_enabled_zones = AsyncMock(return_value=0)
+    coordinator._record_skip = AsyncMock()
+
+    await coordinator.register_start_event()
+
+    coordinator._record_skip.assert_awaited_once_with("no_zones")

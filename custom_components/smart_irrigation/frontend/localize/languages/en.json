@@ -239,7 +239,8 @@
               "precipitation": "Forecasted precipitation",
               "days_between": "Insufficient days since last irrigation",
               "master_switch": "Master switch off",
-              "emergency_stop": "Emergency stop"
+              "emergency_stop": "Emergency stop",
+              "no_zones": "No zones with a positive duration"
             }
           },
           "no-data": "No data available"

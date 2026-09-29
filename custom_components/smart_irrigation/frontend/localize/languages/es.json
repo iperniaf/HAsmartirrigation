@@ -238,7 +238,8 @@
               "precipitation": "Precipitación prevista",
               "days_between": "Días insuficientes desde el último riego",
               "master_switch": "Interruptor maestro apagado",
-              "emergency_stop": "Parada de emergencia"
+              "emergency_stop": "Parada de emergencia",
+              "no_zones": "Sin zonas con duración positiva"
             }
           },
           "no-data": "No hay datos disponibles"

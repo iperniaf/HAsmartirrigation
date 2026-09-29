@@ -64,6 +64,13 @@ class TriggersMixin:
             unsub()
         self._track_irrigation_triggers_unsub.clear()
 
+        if total_duration <= 0:
+            _LOGGER.info(
+                "No enabled zones with duration > 0, skipping trigger registration"
+            )
+            await self._record_skip("no_zones")
+            return
+
         # Get triggers configuration and the single active trigger. The defined
         # triggers are just the pool of options; only the selected one starts
         # irrigation, so multiple triggers can no longer each fire a full run
@@ -93,11 +100,6 @@ class TriggersMixin:
             await self._register_legacy_sunrise_trigger()
             return
 
-        if total_duration <= 0:
-            _LOGGER.info(
-                "No enabled zones with duration > 0, skipping trigger registration"
-            )
-            return
         if not selected.get(const.TRIGGER_CONF_ENABLED, True):
             _LOGGER.info(
                 "Active start trigger '%s' is disabled; nothing scheduled", active
